@@ -1,18 +1,26 @@
+import { spines } from "./main.js";
+import {
+  removeAttachments,
+  restoreSkins,
+  saveSkins,
+} from "./spine-ui.js";
 import {
   isFirstRender,
   moveX,
   moveY,
   premultipliedAlpha,
-  removeAttachments,
-  restoreAnimation,
-  restoreSkins,
   rotate,
-  saveSkins,
   scale,
+  setAnimationStates,
   setFirstRenderFlag,
-} from "./events.js";
-import { createAnimationSelector, resetUI } from "./ui.js";
-import { spines } from "./main.js";
+  setSkeletons,
+  skeletons,
+  animationStates,
+} from "./state.js";
+import {
+  restoreAnimation,
+} from "./ui-controls.js";
+import { createAnimationSelector, resetUI, handleFilterInput } from "./ui.js";
 const { convertFileSrc } = window.__TAURI__.core;
 
 export let spine;
@@ -26,8 +34,6 @@ let lastFrameTime;
 let requestId;
 let _dirName;
 let _fileNames;
-export let animationStates = [];
-export let skeletons = {};
 const spineCanvas = document.getElementById("spineCanvas");
 
 async function getSpineVersion(dirName, fileNames) {
@@ -80,6 +86,10 @@ export async function loadSpineModel(dirName, fileNames) {
   ctx = new spine.ManagedWebGLRenderingContext(spineCanvas, {
     preserveDrawingBuffer: true,
   });
+  ctx.gl.pixelStorei(
+    ctx.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
+    premultipliedAlpha
+  );
   shader = spine.Shader.newTwoColoredTextured(ctx);
   batcher = new spine.PolygonBatcher(ctx);
   skeletonRenderer = new spine.SkeletonRenderer(ctx);
@@ -185,6 +195,7 @@ function render() {
     restoreSkins(skinFlags);
     removeAttachments();
     setFirstRenderFlag(false);
+    handleFilterInput();
   }
   requestId = requestAnimationFrame(render);
 }
@@ -213,13 +224,18 @@ export function resize() {
   ctx.gl.viewport(0, 0, spineCanvas.width, spineCanvas.height);
 }
 
+export async function reloadSpine() {
+  if (_dirName && _fileNames) {
+    disposeSpine();
+    await loadSpineModel(_dirName, _fileNames);
+  }
+}
+
 export function disposeSpine() {
   spineCanvas.style.display = "none";
   if (requestId) window.cancelAnimationFrame(requestId);
   requestId = undefined;
   if (assetManager) assetManager.dispose();
-  animationStates = [];
-  skeletons = {};
-  const skin = document.getElementById("skin");
-  if (skin) skin.innerHTML = "";
+  setAnimationStates([]);
+  setSkeletons({});
 }

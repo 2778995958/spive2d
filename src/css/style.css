@@ -121,6 +121,7 @@ textarea {
   padding: 10px 25px;
   width: 480px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  user-select: none;
 }
 
 .button-group {
@@ -178,6 +179,7 @@ textarea {
   border: var(--border-color);
   background-color: #0006;
   font-size: 15px;
+  user-select: text;
 }
 
 #dialog input[type="checkbox"] {

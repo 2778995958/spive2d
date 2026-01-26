@@ -1,7 +1,5 @@
-import { attachmentsCache, handleFilterInput, setOpacities, setting } from "./events.js";
-import { currentModel } from "./live2d-loader.js";
-import { modelType } from "./main.js";
-import { skeletons } from "./spine-loader.js";
+import { filterBox, settingDiv } from "./elements.js";
+import { attachmentsCache, modelType, setOpacities, setting, currentModel, skeletons } from "./state.js";
 
 const UIElements = {
   parameters: document.getElementById("parameters"),
@@ -98,7 +96,8 @@ function createCheckboxList(parentElement, items, isChecked = true) {
 function createAttachmentCheckboxList(parentElement, items) {
   const checkboxListHTML = items
     .map(([name, index]) => {
-      const isChecked = !attachmentsCache[name];
+      const compositeKey = `${name}##${index}`;
+      const isChecked = !attachmentsCache[compositeKey];
       const checkedAttribute = isChecked ? 'checked' : '';
       return `
       <div class="item">
@@ -167,19 +166,39 @@ function createDrawableUI() {
 export function createAttachmentUI() {
   const skeleton = skeletons["0"]?.skeleton;
   if (!skeleton) return;
-  const attachmentSet = new Map();
+  const currentModelId = UIElements.dirSelector.value + "/" + UIElements.sceneSelector.value;
+  const attachmentMap = new Map();
   skeleton.slots.forEach((slot, index) => {
     if (slot.attachment) {
-      attachmentSet.set(slot.attachment.name, index);
+      const name = slot.attachment.name;
+      const compositeKey = `${name}##${index}`;
+      if (attachmentsCache[compositeKey]) {
+        attachmentsCache[compositeKey] = [index, slot.attachment, false, null, currentModelId];
+        slot.attachment = null;
+      }
+      attachmentMap.set(compositeKey, index);
     }
   });
-  for (const name in attachmentsCache) {
-    if (!attachmentSet.has(name)) {
-      const [index] = attachmentsCache[name];
-      attachmentSet.set(name, index);
+  for (const compositeKey in attachmentsCache) {
+    if (!attachmentMap.has(compositeKey)) {
+      const [index, , wasFromSkin, skinKey, cachedModelId] = attachmentsCache[compositeKey];
+      const [name] = compositeKey.split("##");
+      const slot = skeleton.slots[index];
+      const lookupName = skinKey || (slot && slot.data.attachmentName) || name;
+      const foundAtt = skeleton.getAttachment(index, lookupName);
+      const isCurrentModel = cachedModelId === currentModelId;
+      if ((wasFromSkin && isCurrentModel) || (foundAtt && foundAtt.name === name)) {
+        if (foundAtt) {
+          attachmentsCache[compositeKey][1] = foundAtt;
+        }
+        attachmentMap.set(compositeKey, index);
+      }
     }
   }
-  const allAttachments = Array.from(attachmentSet.entries());
+  const allAttachments = Array.from(attachmentMap.entries()).map(([compositeKey, index]) => {
+    const [name] = compositeKey.split("##");
+    return [name, index];
+  });
   createAttachmentCheckboxList(
     UIElements.attachment,
     allAttachments.sort(sortByName)
@@ -281,4 +300,14 @@ export function resetSettingUI() {
   if (selectedPanel) {
     selectedPanel.style.display = "block";
   }
+}
+
+export function handleFilterInput() {
+  const filterValue = filterBox.value.toLowerCase();
+  settingDiv.querySelectorAll(".item").forEach((item) => {
+    const label = item.querySelector("label");
+    const title = label.getAttribute("title").toLowerCase() || "";
+    item.style.display =
+      title.includes(filterValue) || filterValue === "" ? "flex" : "none";
+  });
 }

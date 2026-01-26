@@ -1,13 +1,16 @@
 import {
   dirSelector,
-  resetAttachmentsCache,
-  resetConfiguration,
-  resetModelState,
   sceneSelector,
-} from "./events.js";
+} from "./elements.js";
+import { setupEventListeners } from "./events.js";
 import { disposeLive2D, loadLive2DModel } from "./live2d-loader.js";
+import { resetModelState } from "./model-actions.js";
 import { disposeSpine, loadSpineModel } from "./spine-loader.js";
+import { resetAttachmentsCache } from "./spine-ui.js";
+import { modelType, setModelType } from "./state.js";
+import { initLanguage, resetConfiguration } from "./ui-controls.js";
 import { createDirSelector, createSceneSelector, getSortableKey } from "./ui.js";
+
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
@@ -21,12 +24,15 @@ export let dirFiles;
 export let isInit = false;
 export let isProcessing = false;
 export const spines = {};
-export let modelType = "live2d";
+
 const versions = ["3.6", "3.7", "3.8", "4.0", "4.1", "4.2"];
 preloadSpines(versions);
 windowWidth.value = window.innerWidth;
 windowHeight.value = window.innerHeight;
 aspectRatioToggle.value = window.innerHeight / window.innerWidth;
+aspectRatioToggle.value = window.innerHeight / window.innerWidth;
+setupEventListeners();
+initLanguage();
 dialog.showModal();
 
 export function setProcessing(status) {
@@ -52,10 +58,10 @@ export function init() {
   const fileNames = dirFiles[dirName][sceneSelector.selectedIndex];
   const ext = fileNames[1];
   if (ext.includes(".moc")) {
-    modelType = "live2d";
+    setModelType("live2d");
     loadLive2DModel(dirName, fileNames);
   } else {
-    modelType = "spine";
+    setModelType("spine");
     loadSpineModel(dirName, fileNames);
   }
   resetConfiguration();
@@ -65,6 +71,7 @@ export function init() {
 export function dispose() {
   if (modelType === "live2d") disposeLive2D();
   else disposeSpine();
+  resetAttachmentsCache();
 }
 
 export async function processPath(paths) {
@@ -89,7 +96,6 @@ export async function processPath(paths) {
       if (dirs.length > 0) {
         createDirSelector(dirs);
         createSceneSelector(sceneIds);
-        resetAttachmentsCache();
         dispose();
         init();
         isInit = true;

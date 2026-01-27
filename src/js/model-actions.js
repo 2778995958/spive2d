@@ -8,21 +8,20 @@ import {
   setRotate,
 } from "./state.js";
 
-export function resetModelState() {
+export function resetModelState(width = window.innerWidth, height = window.innerHeight) {
   setScale(1);
   setMoveX(0);
   setMoveY(0);
   setRotate(0);
   if (!isInit) return;
   if (modelType === "live2d") {
-    const { innerWidth: w, innerHeight: h } = window;
     let _scale = Math.min(
-      w / currentModel.internalModel.originalWidth,
-      h / currentModel.internalModel.originalHeight
+      width / currentModel.internalModel.originalWidth,
+      height / currentModel.internalModel.originalHeight
     );
     _scale *= 1;
     currentModel.scale.set(_scale);
-    currentModel.position.set(w * 0.5, h * 0.5);
+    currentModel.position.set(width * 0.5, height * 0.5);
     currentModel.rotation = 0;
   }
 }

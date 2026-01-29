@@ -25,7 +25,7 @@ import {
   moveY,
   rotate,
   modelType,
-  premultipliedAlpha,
+  alphaMode,
 } from "./state.js";
 import {
   handleLive2DAnimationChange,
@@ -176,7 +176,7 @@ async function exportImageWindowSize(animationName) {
   const backgroundColor = document.body.style.backgroundColor;
   const ctx = tempCanvas.getContext('2d', {
     alpha: !backgroundColor,
-    premultipliedAlpha: premultipliedAlpha,
+    premultipliedAlpha: (alphaMode === "unpack" || alphaMode === "pma"),
   });
   const backgroundImage = document.body.style.backgroundImage;
   const imageUrl = parseBackgroundImageUrl(backgroundImage);
@@ -337,7 +337,7 @@ function checkCondition(rec, compositingCanvas) {
     const backgroundColor = document.body.style.backgroundColor;
     const ctx = compositingCanvas.getContext('2d', {
       alpha: !backgroundColor,
-      premultipliedAlpha: premultipliedAlpha,
+      premultipliedAlpha: (alphaMode === "unpack" || alphaMode === "pma"),
     });
     drawBackground(ctx, compositingCanvas.width, compositingCanvas.height, backgroundImageToRender, backgroundColor);
     ctx.drawImage(activeCanvas, 0, 0, compositingCanvas.width, compositingCanvas.height);

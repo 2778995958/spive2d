@@ -8,7 +8,7 @@ export let rotate = 0;
 export let dirIndex = 0;
 export let sceneIndex = 0;
 export let isFirstRender = true;
-export let premultipliedAlpha = false;
+export let alphaMode = "unpack";
 export let setting = "parameters";
 export let attachmentsCache = {};
 export let opacities;
@@ -27,7 +27,7 @@ export function setRotate(val) { rotate = val; }
 export function setDirIndex(val) { dirIndex = val; }
 export function setSceneIndex(val) { sceneIndex = val; }
 export function setFirstRenderFlag(flag) { isFirstRender = flag; }
-export function setPremultipliedAlpha(val) { premultipliedAlpha = val; }
+export function setAlphaMode(val) { alphaMode = val; }
 export function setSetting(val) { setting = val; }
 export function setAttachmentsCache(val) { attachmentsCache = val; }
 export function resetAttachmentsCache() { attachmentsCache = {}; }

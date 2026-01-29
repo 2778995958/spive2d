@@ -1,5 +1,5 @@
 import {
-  pmaCheckbox,
+  pmaSelect,
   dirSelector,
   sceneSelector,
   animationSelector,
@@ -55,7 +55,7 @@ import {
   handleSettingMouseOver,
   handleSettingClick,
   handleSettingMouseUp,
-  handlePMACheckboxChange,
+  handleAlphaModeChange,
   handleParameterSliderChange,
   handlePartCheckboxChange,
   handleDrawableCheckboxChange,
@@ -98,7 +98,7 @@ export function setupEventListeners() {
   document.addEventListener("mousemove", handleMouseMove);
   document.addEventListener("mouseup", handleMouseUp);
   document.addEventListener("wheel", handleWheel);
-  pmaCheckbox.addEventListener("change", handlePMACheckboxChange);
+  pmaSelect.addEventListener("change", handleAlphaModeChange);
   dirSelector.addEventListener("change", handleDirChange);
   sceneSelector.addEventListener("change", handleSceneChange);
   animationSelector.addEventListener("change", handleAnimationChange);

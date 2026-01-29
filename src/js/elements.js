@@ -1,6 +1,6 @@
 export const dialog = document.getElementById("dialog");
 export const sidebar = document.getElementById("sidebar");
-export const pmaCheckbox = document.getElementById("pmaCheckbox");
+export const pmaSelect = document.getElementById("pmaSelect");
 export const dirSelector = document.getElementById("dirSelector");
 export const sceneSelector = document.getElementById("sceneSelector");
 export const animationSelector = document.getElementById("animationSelector");

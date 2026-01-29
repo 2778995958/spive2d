@@ -79,9 +79,11 @@
       <option id="attachments" value="attachments" data-i18n="attachments">Attachments</option>
       <option id="skins" value="skins" data-i18n="skins">Skins</option>
     </select>
-    <div class="item" id="pmaDiv">
-      <label title="premultipliedAlpha"><span data-i18n="premultipliedAlpha">premultipliedAlpha</span><input type="checkbox" id="pmaCheckbox" /></label>
-    </div>
+    <select id="pmaSelect">
+      <option value="npm" data-i18n="alphaModeNPM">NPM (Non-Premultiplied)</option>
+      <option value="unpack" data-i18n="alphaModeUnpack" selected>UNPACK (Premultiply on Upload)</option>
+      <option value="pma" data-i18n="alphaModePMA">PMA (Premultiplied Alpha)</option>
+    </select>
     <input type="text" id="filterBox" placeholder="Filter..." autocomplete="off" data-i18n-placeholder="filter" />
     <div id="setting">
       <div id="parameter"></div>

@@ -20,6 +20,8 @@
   "drawables": "可绘制对象",
   "attachments": "附件",
   "skins": "皮肤",
-  "premultipliedAlpha": "预乘 Alpha",
+  "alphaModeNPM": "NPM (非乘算)",
+  "alphaModeUnpack": "UNPACK (上传时乘算)",
+  "alphaModePMA": "PMA (预乘算)",
   "filter": "筛选..."
 }

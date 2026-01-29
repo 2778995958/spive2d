@@ -7,7 +7,7 @@ const UIElements = {
   drawables: document.getElementById("drawables"),
   attachments: document.getElementById("attachments"),
   skins: document.getElementById("skins"),
-  pmaDiv: document.getElementById("pmaDiv"),
+  pmaSelect: document.getElementById("pmaSelect"),
   parameter: document.getElementById("parameter"),
   part: document.getElementById("part"),
   drawable: document.getElementById("drawable"),
@@ -245,7 +245,7 @@ function setElementDisplay(elements, display) {
 
 function setupUIForLive2D() {
   setElementDisplay(['parameters', 'parts', 'drawables', 'parameter'], 'block');
-  setElementDisplay(['part', 'drawable', 'expressionSelector', 'attachments', 'skins', 'attachment', 'skin', 'pmaDiv'], 'none');
+  setElementDisplay(['part', 'drawable', 'expressionSelector', 'attachments', 'skins', 'attachment', 'skin', 'pmaSelect'], 'none');
   UIElements.settingSelector.innerHTML = `
     ${optionsHTML.parameters}
     ${optionsHTML.parts}
@@ -260,7 +260,7 @@ function setupUIForLive2D() {
 }
 
 function setupUIForSpine() {
-  setElementDisplay(['attachments', 'skins', 'attachment', 'pmaDiv'], 'block');
+  setElementDisplay(['attachments', 'skins', 'attachment', 'pmaSelect'], 'block');
   setElementDisplay(['skin', 'parameters', 'parts', 'drawables', 'parameter', 'part', 'drawable', 'expressionSelector'], 'none');
   UIElements.settingSelector.innerHTML = `
     ${optionsHTML.attachments}

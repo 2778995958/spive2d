@@ -20,6 +20,8 @@
   "drawables": "Drawables",
   "attachments": "Attachments",
   "skins": "Skins",
-  "premultipliedAlpha": "premultipliedAlpha",
+  "alphaModeNPM": "NPM (Non-Premultiplied)",
+  "alphaModeUnpack": "UNPACK (Premultiply on Upload)",
+  "alphaModePMA": "PMA (Premultiplied Alpha)",
   "filter": "Filter..."
 }

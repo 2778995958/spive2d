@@ -7,7 +7,7 @@ import {
   languageSelector,
   originalWidthInput,
   originalHeightInput,
-  pmaCheckbox,
+  pmaSelect,
   settingSelector,
   sceneSelector,
   windowWidthInput,
@@ -24,7 +24,7 @@ import {
   modelType,
   opacities,
   setFirstRenderFlag,
-  setPremultipliedAlpha,
+  setAlphaMode,
   setSetting,
 } from "./state.js";
 import { createSceneSelector, resetSettingUI } from "./ui.js";
@@ -133,8 +133,8 @@ export function handleColorPickerChange() {
   document.body.style.backgroundImage = "none";
 }
 
-export function handlePMACheckboxChange() {
-  setPremultipliedAlpha(pmaCheckbox.checked);
+export function handleAlphaModeChange() {
+  setAlphaMode(pmaSelect.value);
   setFirstRenderFlag(true);
   if (modelType === "spine") reloadSpine();
   focusBody();

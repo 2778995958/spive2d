@@ -9,7 +9,7 @@ import {
   isFirstRender,
   moveX,
   moveY,
-  premultipliedAlpha,
+  alphaMode,
   rotate,
   scale,
   setAnimationStates,
@@ -86,7 +86,7 @@ export async function loadSpineModel(dirName, fileNames) {
   });
   ctx.gl.pixelStorei(
     ctx.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
-    premultipliedAlpha
+    alphaMode === "unpack"
   );
   shader = spine.Shader.newTwoColoredTextured(ctx);
   batcher = new spine.PolygonBatcher(ctx);
@@ -203,7 +203,7 @@ function render() {
     shader.setUniform4x4f(spine.Shader.MVP_MATRIX, mvp.values);
     batcher.begin(shader);
     skeletonRenderer.vertexEffect = null;
-    skeletonRenderer.premultipliedAlpha = premultipliedAlpha;
+    skeletonRenderer.premultipliedAlpha = (alphaMode === "unpack" || alphaMode === "pma");
     skeletonRenderer.draw(batcher, skeleton);
     batcher.end();
     shader.unbind();
@@ -213,10 +213,11 @@ function render() {
     const skinFlags = saveSkins();
     createAnimationSelector(skeletons["0"].skeleton.data.animations);
     restoreAnimation(animationName);
-    const skeleton = skeletons["0"].skeleton;
-    const state = skeletons["0"].state;
-    state.apply(skeleton);
-    skeleton.updateWorldTransform(2);
+    for (const fileName of Object.keys(skeletons).reverse()) {
+      const skeleton = skeletons[fileName].skeleton;
+      skeleton.setToSetupPose();
+      skeleton.updateWorldTransform(2);
+    }
     resetUI();
     restoreSkins(skinFlags);
     removeAttachments();
@@ -318,7 +319,7 @@ export function captureFrame(width, height) {
   for (const fileName of Object.keys(skeletons).reverse()) {
     const skeleton = skeletons[fileName].skeleton;
     skeletonRenderer.vertexEffect = null;
-    skeletonRenderer.premultipliedAlpha = premultipliedAlpha;
+    skeletonRenderer.premultipliedAlpha = (alphaMode === "unpack" || alphaMode === "pma");
     skeletonRenderer.draw(batcher, skeleton);
   }
   batcher.end();

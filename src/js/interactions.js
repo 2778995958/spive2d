@@ -22,7 +22,7 @@ import {
   windowHeightInput,
 } from "./elements.js";
 import { focusBody } from "./events.js";
-import { exportAnimation, exportImage, batchExportLive2D } from "./export.js";import { isInit, isProcessing } from "./main.js";
+import { exportAnimation, exportImage, batchExportLive2D } from "./export.js";
 import { currentModel } from "./state.js";
 import { isInit, isProcessing } from "./main.js";
 import {
@@ -192,5 +192,6 @@ export function handleWheel(e) {
     currentModel.scale.set(_scale);
   }
 }
+
 
 

@@ -321,7 +321,7 @@ async function startRecording(animationName) {
       const link = document.createElement("a");
       const selectedSceneText = sceneSelector.options[sceneSelector.selectedIndex].textContent;
       const safeAnimationName = animationName ? animationName.split(".")[0] : "animation";
-      link.download = `${selectedSceneText}_${safeAnimationName}.webm`;
+      link.download = `${selectedSceneText}_${animationName}.webm`;
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
@@ -412,4 +412,149 @@ function checkCondition(rec, compositingCanvas) {
     }
   }
   progressBar.style.width = `${Math.min(progress, 100)}%`;
+}
+
+/**
+ * 批量匯出 Live2D (終極修正版)
+ * 1. 動作排序改為：Idle -> Action -> Face
+ * 2. 預設 Idle, 0 (不再預設 Action)
+ * 3. 輸出原尺寸 PNG 格式
+ * 4. 支援單一或全清單模型批量處理
+ */
+export async function batchExportLive2D() {
+  if (isProcessing || modelType !== "live2d") return;
+
+  // --- 1. 參數詢問 ---
+  const scopeInput = prompt("👉 處理範圍：\n1: 僅當前模型\n2: 批量處理清單中所有模型", "1");
+  if (!scopeInput) return;
+  const isBatchAll = scopeInput.includes("2");
+
+  const targetGroup = prompt("👇 請輸入要抓取的「動作組」(Action)：", "Idle"); // 預設 Idle
+  if (!targetGroup) return;
+
+  const rangeInput = prompt("👇 請輸入動作編號範圍 (all 或 數字如 '0')：", "0"); // 預設 0
+  if (!rangeInput) return;
+
+  const originalSizeCheckbox = document.getElementById('originalSizeCheckbox');
+
+  // --- 2. 核心處理函式 ---
+  const processOneModel = async (config) => {
+    const internalModel = currentModel.internalModel;
+    const motionMgr = internalModel.motionManager;
+    const coreModel = internalModel.coreModel;
+    
+    // 取得動作定義檔
+    let motions = internalModel.settings?.motions || motionMgr?.definitions;
+    if (!motions) return;
+
+    const allKeys = Object.keys(motions);
+    
+    // 找出各個群組
+    const idleKey = allKeys.find(k => k.toLowerCase() === 'idle');
+    const faceKey = allKeys.find(k => k.toLowerCase() === 'face' || k.toLowerCase() === 'expressions');
+    const actionKey = allKeys.find(k => k.toLowerCase() === config.targetGroup.toLowerCase()) || 
+                      allKeys.find(k => k.toLowerCase() === 'action');
+
+    const faceList = faceKey ? motions[faceKey] : [];
+    const actionList = actionKey ? motions[actionKey] : [];
+
+    if (actionList.length === 0) {
+        console.warn(`跳過：在模型中找不到動作組 [${config.targetGroup}]`);
+        return;
+    }
+
+    // 解析動作範圍
+    let startIdx = 0, endIdx = actionList.length - 1;
+    if (config.range.toLowerCase() !== "all") {
+        if (config.range.includes("-")) {
+            const parts = config.range.split("-");
+            startIdx = parseInt(parts[0]);
+            endIdx = parseInt(parts[1]);
+        } else {
+            startIdx = parseInt(config.range);
+            endIdx = parseInt(config.range);
+        }
+    }
+    startIdx = Math.max(0, startIdx);
+    endIdx = Math.min(actionList.length - 1, endIdx);
+
+    const originalBg = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = ""; 
+
+    try {
+      for (let a = startIdx; a <= endIdx; a++) {
+        for (let f = 0; f < faceList.length; f++) {
+          
+          // --- 動作疊加排序邏輯 ---
+
+          // 1. Idle (優先權 1)：先墊底
+          if (idleKey) {
+              await currentModel.motion(idleKey, 0, 1);
+              motionMgr.update(coreModel, 5000); // 讓 Idle 定格
+          }
+
+          // 2. Action (優先權 2)：疊加動作
+          await currentModel.motion(actionKey, a, 2);
+          motionMgr.update(coreModel, 5000); // 讓動作定格
+
+          // 3. Face (優先權 3)：強制覆蓋表情
+          if (faceKey) {
+              await currentModel.motion(faceKey, f, 3);
+              motionMgr.update(coreModel, 0); // 取表情第一幀
+          }
+          
+          coreModel.update();
+
+          // --- 檔案處理 ---
+          const modelName = dirSelector.options[dirSelector.selectedIndex].text;
+          const motionEntry = actionList[a];
+          const rawName = (motionEntry.File || motionEntry.file || `${actionKey}_${a}`).split('/').pop().replace('.motion3.json', '');
+          const fileName = `[${modelName}]_${rawName}_Face${f}`;
+
+          // 尺寸處理
+          let exportCanvas;
+          if (originalSizeCheckbox && originalSizeCheckbox.checked) {
+            const { width, height } = getOriginalModelSize();
+            exportCanvas = captureLive2DFrame(width, height); 
+          } else {
+            exportCanvas = live2dCanvas;
+          }
+
+          // 儲存 PNG
+          const link = document.createElement('a');
+          link.download = `${fileName}.png`;
+          link.href = exportCanvas.toDataURL("image/png");
+          link.click();
+          
+          await new Promise(r => setTimeout(r, 100));
+        }
+      }
+    } finally {
+      document.body.style.backgroundColor = originalBg;
+    }
+  };
+
+  // --- 3. 執行批次邏輯 ---
+  if (isBatchAll) {
+    const options = Array.from(dirSelector.options);
+    for (let i = 0; i < options.length; i++) {
+      dirSelector.selectedIndex = i;
+      dirSelector.dispatchEvent(new Event("change")); // 切換模型
+      
+      // 等待模型載入
+      await new Promise(resolve => {
+        const check = () => {
+          if (currentModel && currentModel.internalModel) resolve();
+          else setTimeout(check, 300);
+        };
+        check();
+      });
+      await new Promise(r => setTimeout(r, 1000));
+      await processOneModel({ targetGroup, range: rangeInput });
+    }
+    alert("批量處理完成！");
+  } else {
+    await processOneModel({ targetGroup, range: rangeInput });
+    alert("當前模型處理完成！");
+  }
 }

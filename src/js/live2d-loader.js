@@ -22,6 +22,25 @@ export async function loadLive2DModel(dirName, fileNames) {
   const model = await Live2DModel.from(convertFileSrc(`${dirName}${fileNames[0]}${ext}`), {
     autoInteract: false,
   });
+  // === 加入這段：完全凍結手術 ===
+  const internal = model.internalModel;
+
+  // 1. 殺掉閒置動作 (Idle Motion)：讓它不要自動播動作
+  if (internal.motionManager.groups.idle) {
+      internal.motionManager.groups.idle = null;
+  }
+
+  // 2. 殺掉自動眨眼 (Eye Blink)：有些模型會自己眨眼
+  internal.eyeBlink = undefined;
+
+  // 3. 殺掉呼吸 (Breath)：這是最常見的「不動還在動」的原因
+  // 呼吸是透過程式控制參數 (ParamBreath) 的正弦波，必須手動關閉
+  internal.breath = undefined;
+
+  // 4. 殺掉物理 (Physics)：防止頭髮、衣服隨重力飄動
+  internal.physics = undefined;
+  internal._physicsEnabled = false;
+  // ============================
   setCurrentModel(model);
   const { innerWidth: w, innerHeight: h } = window;
   const _scale = Math.min(

@@ -16,12 +16,16 @@ import {
 import { focusBody } from "./events.js";
 import { dispose, dirFiles, init, isInit } from "./main.js";
 import { resetModelState } from "./model-actions.js";
+import { renderLive2D } from "./live2d-loader.js";
+import { resetProgress, seekAnimation } from "./animation-controller.js";
 import { reloadSpine } from "./spine-loader.js";
 import {
   currentModel,
   skeletons,
   animationStates,
+  currentLive2DMotion,
   modelType,
+  isPaused,
   opacities,
   setFirstRenderFlag,
   setAlphaMode,
@@ -64,6 +68,22 @@ function applyTranslations(translations) {
 export function initLanguage() {
   const savedLang = localStorage.getItem("spive2d_language") || "en";
   handleLanguageSelectorChange({ target: { value: savedLang } });
+}
+
+export function initBackgroundColor() {
+  const savedColor = localStorage.getItem("spive2d_bg_color");
+  const savedImagePath = localStorage.getItem("spive2d_bg_image_path");
+  if (savedImagePath) {
+    const { convertFileSrc } = window.__TAURI__.core;
+    document.body.style.backgroundColor = "";
+    document.body.style.backgroundImage = `url("${convertFileSrc(savedImagePath)}")`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+  } else if (savedColor) {
+    document.body.style.backgroundColor = savedColor;
+    document.body.style.backgroundImage = "none";
+    if (bgColorPicker) bgColorPicker.value = savedColor;
+  }
 }
 
 export function handleSettingSelectorChange(e) {
@@ -129,8 +149,11 @@ export async function handleSetOriginalSize() {
 }
 
 export function handleColorPickerChange() {
-  document.body.style.backgroundColor = bgColorPicker.value;
+  const color = bgColorPicker.value;
+  document.body.style.backgroundColor = color;
   document.body.style.backgroundImage = "none";
+  localStorage.setItem("spive2d_bg_color", color);
+  localStorage.removeItem("spive2d_bg_image_path");
 }
 
 export function handleAlphaModeChange() {
@@ -184,7 +207,9 @@ export function handleSceneChange() {
 }
 
 export function handleLive2DAnimationChange(motion, index) {
-  currentModel.motion(motion, Number(index), 3);
+  currentLive2DMotion.group = motion;
+  currentLive2DMotion.index = Number(index);
+  return currentModel.motion(motion, Number(index), 3);
 }
 
 export function handleExpressionChange(e) {
@@ -240,6 +265,10 @@ export function handleParameterSliderChange(e) {
   const index = inputs.indexOf(e.target);
   const parameterValues = currentModel.internalModel.coreModel._parameterValues;
   parameterValues[index] = e.target.value;
+  if (isPaused && modelType === "live2d") {
+    currentModel.internalModel.coreModel.update();
+    renderLive2D();
+  }
 }
 
 export function handlePartCheckboxChange(e) {
@@ -247,6 +276,10 @@ export function handlePartCheckboxChange(e) {
     e.target.previousSibling.textContent,
     +e.target.checked
   );
+  if (isPaused && modelType === "live2d") {
+    currentModel.internalModel.coreModel.update();
+    renderLive2D();
+  }
 }
 
 export function handleDrawableCheckboxChange(e) {
@@ -284,6 +317,12 @@ export function handleAnimationChange(e) {
     handleLive2DAnimationChange(motion, index);
   } else {
     handleSpineAnimationChange(e.target.selectedIndex);
+  }
+  if (isPaused) {
+    resetProgress();
+    requestAnimationFrame(() => {
+      seekAnimation(0);
+    });
   }
 }
 

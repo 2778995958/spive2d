@@ -274,3 +274,87 @@ canvas {
   display: none;
   vertical-align: top;
 }
+
+#spineFrameCounter {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text-color);
+  text-shadow: var(--text-shadow);
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 1000;
+  font-weight: bold;
+}
+
+#animationController {
+  position: fixed;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  background: var(--sidebar-color);
+  padding: 10px 20px;
+  border-radius: 12px 12px 0 0;
+  border: var(--border-color);
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+}
+
+#animationController.show {
+  bottom: 0;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon-button svg {
+  display: block;
+}
+
+#animationSeeker {
+  flex-grow: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #555;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+}
+
+#animationSeeker::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #39d;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+#animationTimeDisplay {
+  font-family: monospace;
+  font-size: 14px;
+  min-width: 100px;
+  text-align: right;
+  text-shadow: var(--text-shadow);
+}

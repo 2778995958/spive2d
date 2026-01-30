@@ -17,7 +17,11 @@ import {
   setSkeletons,
   skeletons,
   animationStates,
+  isUserSeeking,
+  isPaused,
 } from "./state.js";
+
+
 import {
   restoreAnimation,
 } from "./ui-controls.js";
@@ -195,7 +199,9 @@ function render() {
   for (const fileName of Object.keys(skeletons).reverse()) {
     const skeleton = skeletons[fileName].skeleton;
     const state = skeletons[fileName].state;
-    state.update(delta);
+    if (!isUserSeeking && !isPaused) {
+      state.update(delta);
+    }
     state.apply(skeleton);
     skeleton.updateWorldTransform(2);
     shader.bind();
@@ -207,6 +213,22 @@ function render() {
     skeletonRenderer.draw(batcher, skeleton);
     batcher.end();
     shader.unbind();
+    if (fileName === "0") {
+      const spineFrameCounter = document.getElementById("spineFrameCounter");
+      if (spineFrameCounter && state.tracks[0]) {
+        const entry = state.tracks[0];
+        const animation = entry.animation;
+        const fps = 30;
+        const duration = animation.duration || 0;
+        let currentTime = entry.trackTime || 0;
+        if (entry.loop && duration > 0) {
+          currentTime %= duration;
+        }
+        const currentFrame = Math.floor(currentTime * fps);
+        const totalFrames = Math.floor(duration * fps);
+        spineFrameCounter.textContent = `${currentFrame} / ${totalFrames}`;
+      }
+    }
   }
   if (isFirstRender) {
     const animationName = document.getElementById("animationSelector").value;

@@ -26,18 +26,33 @@ import {
   rotate,
   modelType,
   alphaMode,
+  setIsPaused,
 } from "./state.js";
 import {
   handleLive2DAnimationChange,
 } from "./ui-controls.js";
 
-const RECORDING_MIME_TYPE = "video/webm;codecs=vp8";
+function getSupportedMimeType() {
+  const types = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm;codecs=h264",
+  ];
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+  return "video/webm";
+}
+
 const RECORDING_BITRATE = 12000000;
 const RECORDING_FRAME_RATE = 60;
 let animationDuration = 0;
 let recordingStartTime;
 let activeCanvas;
 let _prevActiveCanvasState;
+let _prevAutoUpdate;
 let backgroundImageToRender = null;
 const progressBarContainer = document.getElementById("progressBarContainer");
 const progressBar = document.getElementById("progressBar");
@@ -239,6 +254,10 @@ async function startRecording(animationName) {
     progressBarContainer.style.display = "none";
     backgroundImageToRender = null;
     _prevActiveCanvasState = null;
+    if (modelType === "live2d" && currentModel) {
+      if (!currentModel.autoUpdate) currentModel.autoUpdate = true;
+      _prevAutoUpdate = undefined;
+    }
   };
   backgroundImageToRender = null;
   const backgroundColor = document.body.style.backgroundColor;
@@ -262,6 +281,8 @@ async function startRecording(animationName) {
     compositingCanvas.height = activeCanvas.height;
   }
   if (modelType === "live2d") {
+    _prevAutoUpdate = currentModel.autoUpdate;
+    currentModel.autoUpdate = false;
     const [group, index] = animationSelector.value.split(",");
     const motion = currentModel.internalModel.motionManager.motionGroups[group]?.[index];
     if (motion) {
@@ -283,8 +304,9 @@ async function startRecording(animationName) {
   await new Promise(resolve => setTimeout(resolve, 100));
 
   const stream = streamSource.captureStream(RECORDING_FRAME_RATE);
+  const mimeType = getSupportedMimeType();
   const rec = new MediaRecorder(stream, {
-    mimeType: RECORDING_MIME_TYPE,
+    mimeType: mimeType,
     videoBitsPerSecond: RECORDING_BITRATE,
   });
 
@@ -315,20 +337,51 @@ async function startRecording(animationName) {
     for (const animationState of animationStates) {
       animationState.tracks[0].trackTime = 0;
     }
+    setIsPaused(false);
     rec.start();
     recordingStartTime = performance.now();
     requestAnimationFrame(() => checkCondition(rec, compositingCanvas));
   } else if (modelType === "live2d") {
+    _prevAutoUpdate = currentModel.autoUpdate;
     const [motion, index] = animationSelector.value.split(",");
-    currentModel.internalModel.motionManager._stopAllMotions();
-    setTimeout(() => {
-      handleLive2DAnimationChange(motion, index);
-      setTimeout(() => {
-        rec.start();
-        recordingStartTime = performance.now();
-        requestAnimationFrame(() => checkCondition(rec, compositingCanvas));
-      }, 300);
-    }, 100);
+    handleLive2DAnimationChange(motion, index).then(() => {
+      const entry = currentModel.internalModel.motionManager?.queueManager?._motions?.[0];
+      if (entry) {
+        entry._startTimeSeconds = entry._stateTimeSeconds;
+        if ('_loopDurationSeconds' in entry) {
+          animationDuration = entry._loopDurationSeconds;
+        } else if ('_motion' in entry && entry._motion) {
+          const m = entry._motion;
+          if ('_loopDurationSeconds' in m) {
+            animationDuration = m._loopDurationSeconds;
+          } else if ('getDurationMSec' in m) {
+            animationDuration = m.getDurationMSec() / 1000;
+          }
+        }
+      }
+      if (!animationDuration || animationDuration <= 0.01) {
+        const [group, idx] = animationSelector.value.split(",");
+        const motion = currentModel.internalModel.motionManager.motionGroups[group]?.[idx];
+        if (motion) {
+          if ('_loopDurationSeconds' in motion) animationDuration = motion._loopDurationSeconds;
+          else if ('getDurationMSec' in motion) animationDuration = motion.getDurationMSec() / 1000;
+        }
+        if (!animationDuration || animationDuration <= 0.01) animationDuration = 3;
+      }
+      currentModel.autoUpdate = true;
+      let frameCount = 0;
+      const checkFrame = () => {
+        frameCount++;
+        if (frameCount >= 5) {
+          rec.start();
+          recordingStartTime = performance.now();
+          checkCondition(rec, compositingCanvas);
+        } else {
+          requestAnimationFrame(checkFrame);
+        }
+      };
+      requestAnimationFrame(checkFrame);
+    });
   }
 }
 

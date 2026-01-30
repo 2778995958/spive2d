@@ -8,7 +8,8 @@ import { resetModelState } from "./model-actions.js";
 import { disposeSpine, loadSpineModel } from "./spine-loader.js";
 import { resetAttachmentsCache } from "./spine-ui.js";
 import { modelType, setModelType } from "./state.js";
-import { initLanguage, resetConfiguration } from "./ui-controls.js";
+import { initLanguage, initBackgroundColor, resetConfiguration } from "./ui-controls.js";
+import { initAnimationController } from "./animation-controller.js";
 import { createDirSelector, createSceneSelector, getSortableKey } from "./ui.js";
 
 const { invoke } = window.__TAURI__.core;
@@ -33,6 +34,8 @@ aspectRatioToggle.value = window.innerHeight / window.innerWidth;
 aspectRatioToggle.value = window.innerHeight / window.innerWidth;
 setupEventListeners();
 initLanguage();
+initBackgroundColor();
+initAnimationController();
 dialog.showModal();
 
 export function setProcessing(status) {

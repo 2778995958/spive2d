@@ -28,3 +28,5 @@ export const setOriginalSizeButton = document.getElementById("setOriginalSizeBut
 export const resetStateButton = document.getElementById("resetStateButton");
 export const parameterDiv = document.getElementById("parameter");
 export const attachmentDiv = document.getElementById("attachment");
+export const spineFrameCounter = document.getElementById("spineFrameCounter");
+export const animationController = document.getElementById("animationController");

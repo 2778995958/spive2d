@@ -57,6 +57,7 @@ export async function handleOpenImage() {
   document.body.style.backgroundImage = `url("${convertFileSrc(file)}")`;
   document.body.style.backgroundSize = "cover";
   document.body.style.backgroundPosition = "center";
+  localStorage.setItem("spive2d_bg_image_path", file);
 }
 
 export async function handleRemoveImage() {
@@ -68,4 +69,6 @@ export async function handleRemoveImage() {
     linear-gradient(45deg, transparent 75%, #fff 0)`;
   document.body.style.backgroundSize = "32px 32px";
   document.body.style.backgroundPosition = "0 0, 16px 16px, 16px 16px, 32px 32px";
+  localStorage.removeItem("spive2d_bg_image_path");
+  localStorage.removeItem("spive2d_bg_color");
 }

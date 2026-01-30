@@ -16,6 +16,11 @@ export let modelType = "live2d";
 export let currentModel;
 export let skeletons = {};
 export let animationStates = [];
+export let isUserSeeking = false;
+export let isPaused = false;
+export let currentLive2DMotion = { group: null, index: null };
+export let pausedSeekProgress = 0;
+
 export function updateScale(updater) { scale = updater(scale); }
 export function updateMoveX(updater) { moveX = updater(moveX); }
 export function updateMoveY(updater) { moveY = updater(moveY); }
@@ -36,3 +41,8 @@ export function setModelType(val) { modelType = val; }
 export function setCurrentModel(val) { currentModel = val; }
 export function setSkeletons(val) { skeletons = val; }
 export function setAnimationStates(val) { animationStates = val; }
+export function setIsUserSeeking(val) { isUserSeeking = val; }
+export function setIsPaused(val) { isPaused = val; }
+export function setPausedSeekProgress(val) { pausedSeekProgress = val; }
+
+

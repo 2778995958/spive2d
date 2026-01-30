@@ -44,6 +44,8 @@ const rootStyles = getComputedStyle(document.documentElement);
 const sidebarWidth = Number(
   rootStyles.getPropertyValue("--sidebar-width").replace("px", "")
 );
+const CONTROLLER_HEIGHT = 80;
+
 
 export function handleResize() {
   const { innerWidth: w, innerHeight: h } = window;
@@ -113,12 +115,22 @@ export function handleMouseDown(e) {
   startY = e.clientY;
   mouseDown = true;
   isMove =
-    e.clientX < live2dCanvas.width - sidebarWidth && e.clientX > sidebarWidth;
+    e.clientX < live2dCanvas.width - sidebarWidth && e.clientX > sidebarWidth && (window.innerHeight - e.clientY > CONTROLLER_HEIGHT);
 }
 
+
 function updateSidebarStyle(e) {
-  if (e.clientX <= sidebarWidth) sidebar.style.visibility = "visible";
-  else sidebar.style.visibility = "hidden";
+  if (e.clientX <= sidebarWidth) {
+    sidebar.style.visibility = "visible";
+    if (modelType === "spine") {
+      const spineFrameCounter = document.getElementById("spineFrameCounter");
+      if (spineFrameCounter) spineFrameCounter.style.visibility = "visible";
+    }
+  } else {
+    sidebar.style.visibility = "hidden";
+    const spineFrameCounter = document.getElementById("spineFrameCounter");
+    if (spineFrameCounter) spineFrameCounter.style.visibility = "hidden";
+  }
 }
 
 function updateCursorStyle(e) {
@@ -141,11 +153,12 @@ export function handleMouseMove(e) {
         h * 0.5 + moveY
       );
     }
-  } else if (e.clientX >= live2dCanvas.width - sidebarWidth) {
+  } else if (e.clientX >= live2dCanvas.width - sidebarWidth && (window.innerHeight - e.clientY > CONTROLLER_HEIGHT)) {
     const delta = (e.clientY - startY) * rotateStep * (e.clientX >= live2dCanvas.width - sidebarWidth ? 1 : -1);
     setRotate(rotate + delta);
     if (modelType === "live2d") currentModel.rotation = rotate;
   }
+
   startX = e.clientX;
   startY = e.clientY;
 }
@@ -157,7 +170,7 @@ export function handleMouseUp() {
 
 export function handleWheel(e) {
   if (!isInit) return;
-  if (e.clientX < sidebarWidth) return;
+  if (e.clientX < sidebarWidth || (window.innerHeight - e.clientY <= CONTROLLER_HEIGHT)) return;
   const baseScaleStep = 0.1;
   const scaleFactor = 0.1;
   const scaleStep = baseScaleStep + Math.abs(scale - 1) * scaleFactor;

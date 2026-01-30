@@ -98,6 +98,9 @@ export function handleKeyboardInput(e) {
     case "c":
       exportAnimation();
       break;
+    case "b": 
+      batchExportLive2D();
+      break;
   }
   focusBody();
 }
@@ -189,3 +192,4 @@ export function handleWheel(e) {
     currentModel.scale.set(_scale);
   }
 }
+
